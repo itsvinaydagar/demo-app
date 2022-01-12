@@ -1,74 +1,62 @@
-import React, { useState } from 'react';
-
-export interface User {
-  firstName: string;
-  middleName?: string;
-  lastName?: string;
-  email: string;
-  phone?: number;
-  role: string;
-  address?: string;
-  createdOn?: Date;
-  modifiedOn?: Date;
-}
+import React, { useState, ChangeEvent } from 'react';
+import User, { IUser, Role } from './User';
 
 const defaultData: User[] = [
-  {
+  new User({
     firstName: 'Vinay',
     lastName: 'Dagar',
     middleName: '',
     email: 'vinay.dagar@sourcefuse.com',
     phone: 8988878909,
-    role: 'subscriber',
+    role: Role.Subscriber,
     address: 'New Delhi',
     createdOn: new Date(),
     modifiedOn: new Date(),
-  },
-  {
+  }),
+  new User({
     firstName: 'Mayank',
     lastName: 'Rathi',
     middleName: '',
     email: 'mayank.rathi@sourcefuse.com',
     phone: 8988878909,
-    role: 'subscriber',
+    role: Role.Subscriber,
     address: 'Gagiabad',
     createdOn: new Date(),
     modifiedOn: new Date(),
-  },
-  {
+  }),
+  new User({
     firstName: 'Akshat',
     lastName: 'Dubey',
     middleName: '',
     email: 'akshat.dubet@sourcefuse.com',
     phone: 8988878909,
-    role: 'subscriber',
+    role: Role.Subscriber,
     address: 'Delhi',
     createdOn: new Date(),
     modifiedOn: new Date(),
-  },
-  {
+  }),
+  new User({
     firstName: 'Yesha',
     lastName: 'Mavani',
     middleName: '',
     email: 'yesha.mavani@sourcefuse.com',
     phone: 8988878909,
-    role: 'subscriber',
+    role: Role.Subscriber,
     address: 'Noida',
     createdOn: new Date(),
     modifiedOn: new Date(),
-  },
+  }),
 ]
 
 const App = () => {
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
-  const [isEditable, setIsEditable] = useState<boolean>(false);
   const [editabelRow, setEditableRow] = useState<number>();
-  const [editableData, setEdiatableData] = useState<User>({
+  const [editableData, setEdiatableData] = useState<IUser>({
     firstName: '',
     email: '',
-    role: '',
+    role: Role.Admin,
   });
-  const [userList, setUserList] = useState<User[]>(defaultData)
+  const [userList, setUserList] = useState<IUser[]>(defaultData)
 
   const handleLoadData = () => {
     setIsLoaded(true);
@@ -76,7 +64,6 @@ const App = () => {
   };
 
   const handleEditRow = (index: number) => {
-    setIsEditable(true);
     setEditableRow(index);
     setEdiatableData(userList[index]);
   }
@@ -85,22 +72,20 @@ const App = () => {
     const list = [...userList];
     list.splice(index, 1);
     setUserList(list);
-
   }
 
   const handleCancleEdit = () => {
-    setIsEditable(false);
     setEditableRow(undefined);
     setEdiatableData({
       firstName: '',
       email: '',
-      role: '',
+      role: Role.Admin,
     });
   }
 
   const handleRowUpdate = () => {
-    if(!editableData.firstName || !editableData.role || !editableData.email) {
-     return alert('First Name, Email & Role are required')
+    if (!editableData.firstName || !editableData.role || !editableData.email) {
+      return alert('First Name, Email & Role are required')
     }
 
     const newData = [...userList]
@@ -113,17 +98,17 @@ const App = () => {
     setEditableRow(undefined);
     setEdiatableData({
       firstName: '',
-      role: '',
-      email:''
+      role: Role.Admin,
+      email: ''
     })
-    setIsEditable(false);
+    // setIsEditable(false);
 
   }
 
-  const ActionButtons = (index: number, user: User) => (
+  const ActionButtons = (index: number) => (
     <>
       {
-        isEditable && editabelRow === index ? (<>
+        editabelRow === index ? (<>
           <p onClick={handleRowUpdate} className='text-success cursor-pointer'>Save</p>
           <p onClick={handleCancleEdit} className='text-warning cursor-pointer'>Cancel</p>
         </>)
@@ -160,64 +145,68 @@ const App = () => {
                   </thead>
                   <tbody>
                     {userList.map((user, i) => (
-                      <React.Fragment key={i}>
-                        <tr>
-                          {
-                            editabelRow === i && isEditable ? (
-                              <> <td><input
+                      <tr key={i}>
+                        {
+                          editabelRow === i ? (
+                            <> <td><input
+                              type="text"
+                              value={editableData?.firstName}
+                              onInput={(e: ChangeEvent<HTMLInputElement>) => setEdiatableData({ ...editableData, firstName: e.target.value })}
+                            /> </td>
+                              <td> <input
                                 type="text"
-                                value={editableData?.firstName}
-                                onInput={(e: React.ChangeEvent<HTMLInputElement>) => setEdiatableData({ ...editableData, firstName: e.target.value })}
+                                value={editableData?.middleName}
+                                onInput={(e: ChangeEvent<HTMLInputElement>) => setEdiatableData({ ...editableData, middleName: e.target.value })}
+                              /></td>
+                              <td><input
+                                type="text"
+                                value={editableData?.lastName}
+                                onInput={(e: ChangeEvent<HTMLInputElement>) => setEdiatableData({ ...editableData, lastName: e.target.value })}
+                              /></td>
+                              <td><input
+                                type="text"
+                                value={editableData?.email}
+                                onInput={(e: ChangeEvent<HTMLInputElement>) => setEdiatableData({ ...editableData, email: e.target.value })}
+                              /></td>
+                              <td> <input
+                                type="text"
+                                value={editableData?.phone}
+                                onInput={(e: ChangeEvent<HTMLInputElement>) => setEdiatableData({ ...editableData, phone: +e.target.value })}
+                              /></td>
+                              <td>
+                                <select
+                                  value={Role[editableData.role]}
+                                  onInput={(e: ChangeEvent<HTMLSelectElement>) => setEdiatableData({ ...editableData, role: e.target.value as Role })}>
+                                  {
+                                    Object.keys(Role).map((role: any) => (
+                                      <option key={role} value={role}> {role} </option>
+                                    ))
+                                  }
+                                </select>
+                              </td>
+                              <td><input
+                                type="text"
+                                value={editableData?.address}
+                                onInput={(e: React.ChangeEvent<HTMLInputElement>) => setEdiatableData({ ...editableData, address: e.target.value })}
                               /> </td>
-                               <td> <input
-                                  type="text"
-                                  value={editableData?.middleName}
-                                  onInput={(e: React.ChangeEvent<HTMLInputElement>) => setEdiatableData({ ...editableData, middleName: e.target.value })}
-                                /></td>
-                                <td><input
-                                  type="text"
-                                  value={editableData?.lastName}
-                                  onInput={(e: React.ChangeEvent<HTMLInputElement>) => setEdiatableData({ ...editableData, lastName: e.target.value })}
-                                /></td>
-                                <td><input
-                                  type="text"
-                                  value={editableData?.email}
-                                  onInput={(e: React.ChangeEvent<HTMLInputElement>) => setEdiatableData({ ...editableData, email: e.target.value })}
-                                /></td>
-                                <td> <input
-                                  type="text"
-                                  value={editableData?.phone}
-                                  onInput={(e: React.ChangeEvent<HTMLInputElement>) => setEdiatableData({ ...editableData, phone: +e.target.value })}
-                                /></td>
-                                <td><input
-                                  type="text"
-                                  value={editableData?.role}
-                                  onInput={(e: React.ChangeEvent<HTMLInputElement>) => setEdiatableData({ ...editableData, role: e.target.value })}
-                                /></td>
-                                <td><input
-                                  type="text"
-                                  value={editableData?.address}
-                                  onInput={(e: React.ChangeEvent<HTMLInputElement>) => setEdiatableData({ ...editableData, address: e.target.value })}
-                                /> </td>
-                                <td> {editableData?.createdOn?.toDateString() || ''} </td>
-                                <td> {editableData?.modifiedOn?.toDateString() || ''} </td>
-                                <td> {ActionButtons(i, user)} </td>
-                              </>
-                            ) : <>
-                              <td> {user.firstName} </td>
-                              <td> {user.middleName} </td>
-                              <td> {user.lastName} </td>
-                              <td> {user.email} </td>
-                              <td> {user.phone} </td>
-                              <td> {user.role} </td>
-                              <td> {user.address} </td>
-                              <td> {user?.createdOn?.toLocaleString() || ''} </td>
-                              <td> {user?.modifiedOn?.toLocaleString() || ''} </td>
-                              <td> {ActionButtons(i, user)} </td>
+                              <td> {editableData?.createdOn?.toDateString() || ''} </td>
+                              <td> {editableData?.modifiedOn?.toDateString() || ''} </td>
+                              <td> {ActionButtons(i)} </td>
                             </>
-                          }
-                        </tr>
-                      </ React.Fragment>
+                          ) : <>
+                            <td> {user.firstName} </td>
+                            <td> {user.middleName} </td>
+                            <td> {user.lastName} </td>
+                            <td> {user.email} </td>
+                            <td> {user.phone} </td>
+                            <td> {Role[user.role]} </td>
+                            <td> {user.address} </td>
+                            <td> {User.formateDate(user.createdOn as Date)} </td>
+                            <td> {User.formateDate(user?.modifiedOn as Date) || ''} </td>
+                            <td> {ActionButtons(i)} </td>
+                          </>
+                        }
+                      </tr>
                     ))}
                   </tbody>
                 </table>
