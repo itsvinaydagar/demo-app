@@ -19,19 +19,9 @@ export interface IUser {
 }
 
 export default class User implements IUser{
-  constructor({firstName, middleName = '', lastName = '', email, phone = undefined, role, address = '', createdOn = new Date(), modifiedOn = new Date()} : IUser) {
-    this.firstName = firstName;
-    this.middleName = middleName;
-    this.lastName = lastName;
-    this.email = email;
-    this.phone = phone;
-    this.role = role;
-    this.address = address
-    this.createdOn = createdOn;
-    this.modifiedOn = modifiedOn;
-  }
+  id = 0;
   firstName = '';
-  middleName = '';
+  middleName? = '';
   email = '';
   role = Role.Admin;
   lastName = '';

@@ -1,66 +1,26 @@
 import React, { useState, ChangeEvent } from 'react';
 import User, { IUser, Role } from './User';
-
-const defaultData: User[] = [
-  new User({
-    firstName: 'Vinay',
-    lastName: 'Dagar',
-    middleName: '',
-    email: 'vinay.dagar@sourcefuse.com',
-    phone: 8988878909,
-    role: Role.Subscriber,
-    address: 'New Delhi',
-    createdOn: new Date(),
-    modifiedOn: new Date(),
-  }),
-  new User({
-    firstName: 'Mayank',
-    lastName: 'Rathi',
-    middleName: '',
-    email: 'mayank.rathi@sourcefuse.com',
-    phone: 8988878909,
-    role: Role.Subscriber,
-    address: 'Gagiabad',
-    createdOn: new Date(),
-    modifiedOn: new Date(),
-  }),
-  new User({
-    firstName: 'Akshat',
-    lastName: 'Dubey',
-    middleName: '',
-    email: 'akshat.dubet@sourcefuse.com',
-    phone: 8988878909,
-    role: Role.Subscriber,
-    address: 'Delhi',
-    createdOn: new Date(),
-    modifiedOn: new Date(),
-  }),
-  new User({
-    firstName: 'Yesha',
-    lastName: 'Mavani',
-    middleName: '',
-    email: 'yesha.mavani@sourcefuse.com',
-    phone: 8988878909,
-    role: Role.Subscriber,
-    address: 'Noida',
-    createdOn: new Date(),
-    modifiedOn: new Date(),
-  }),
-]
+import Api from './services/api';
 
 const App = () => {
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
+  const [api] = useState(new Api<User>());
   const [editabelRow, setEditableRow] = useState<number>();
   const [editableData, setEdiatableData] = useState<IUser>({
     firstName: '',
     email: '',
     role: Role.Admin,
   });
-  const [userList, setUserList] = useState<IUser[]>(defaultData)
+  const [userList, setUserList] = useState<User[]>([])
 
-  const handleLoadData = () => {
-    setIsLoaded(true);
-    setUserList(defaultData);
+  const handleLoadData = async () => {
+    try {
+      setIsLoaded(true);
+      const list = await api.get('users');
+      setUserList(list);
+    } catch (error) {
+      console.log(error)
+    }
   };
 
   const handleEditRow = (index: number) => {
@@ -68,10 +28,16 @@ const App = () => {
     setEdiatableData(userList[index]);
   }
 
-  const handleDeleteRow = (index: number) => {
-    const list = [...userList];
-    list.splice(index, 1);
-    setUserList(list);
+  const handleDeleteRow = async (index: number, id: number) => {
+    try {
+      await api.delete('users', id);
+
+      const list = [...userList];
+      list.splice(index, 1);
+      setUserList(list);
+    } catch (err) {
+      console.log(err)
+    }
   }
 
   const handleCancleEdit = () => {
@@ -83,39 +49,37 @@ const App = () => {
     });
   }
 
-  const handleRowUpdate = () => {
-    if (!editableData.firstName || !editableData.role || !editableData.email) {
-      return alert('First Name, Email & Role are required')
+  const handleRowUpdate = async (id: number) => {
+    try {
+      if (!editableData.firstName || !editableData.role || !editableData.email) {
+        return alert('First Name, Email & Role are required')
+      }
+      await api.put('users', id, editableData);
+
+      await handleLoadData();
+
+      setEditableRow(undefined);
+      setEdiatableData({
+        firstName: '',
+        role: Role.Admin,
+        email: ''
+      })
+    } catch (err) {
+      console.log(err)
     }
-
-    const newData = [...userList]
-    newData[editabelRow as number] = editableData;
-
-    newData[editabelRow as number].modifiedOn = new Date();
-
-    setUserList([...newData]);
-
-    setEditableRow(undefined);
-    setEdiatableData({
-      firstName: '',
-      role: Role.Admin,
-      email: ''
-    })
-    // setIsEditable(false);
-
   }
 
-  const ActionButtons = (index: number) => (
+  const ActionButtons = (index: number, id: number) => (
     <>
       {
         editabelRow === index ? (<>
-          <p onClick={handleRowUpdate} className='text-success cursor-pointer'>Save</p>
+          <p onClick={() => handleRowUpdate(id)} className='text-success cursor-pointer'>Save</p>
           <p onClick={handleCancleEdit} className='text-warning cursor-pointer'>Cancel</p>
         </>)
           :
           <>
             <p onClick={() => handleEditRow(index)} className='text-primary cursor-pointer'>Edit</p>
-            <p onClick={() => handleDeleteRow(index)} className='text-danger cursor-pointer'>Delete</p>
+            <p onClick={() => handleDeleteRow(index, id)} className='text-danger cursor-pointer'>Delete</p>
           </>
       }
     </>
@@ -145,7 +109,7 @@ const App = () => {
                   </thead>
                   <tbody>
                     {userList.map((user, i) => (
-                      <tr key={i}>
+                      <tr key={user.id}>
                         {
                           editabelRow === i ? (
                             <> <td><input
@@ -189,9 +153,9 @@ const App = () => {
                                 value={editableData?.address}
                                 onInput={(e: React.ChangeEvent<HTMLInputElement>) => setEdiatableData({ ...editableData, address: e.target.value })}
                               /> </td>
-                              <td> {editableData?.createdOn?.toDateString() || ''} </td>
-                              <td> {editableData?.modifiedOn?.toDateString() || ''} </td>
-                              <td> {ActionButtons(i)} </td>
+                              <td> {User.formateDate(editableData.createdOn as Date)} </td>
+                              <td> {User.formateDate(editableData.modifiedOn as Date)} </td>
+                              <td> {ActionButtons(i, user.id)} </td>
                             </>
                           ) : <>
                             <td> {user.firstName} </td>
@@ -203,7 +167,7 @@ const App = () => {
                             <td> {user.address} </td>
                             <td> {User.formateDate(user.createdOn as Date)} </td>
                             <td> {User.formateDate(user?.modifiedOn as Date) || ''} </td>
-                            <td> {ActionButtons(i)} </td>
+                            <td> {ActionButtons(i, user.id)} </td>
                           </>
                         }
                       </tr>
